@@ -90,32 +90,21 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
 //    }
 
     private MediaPlayer buildMediaPlayer() {
-        MediaPlayer mediaPlayer = MediaPlayer.create(activity, R.raw.zxl_beep);
+        MediaPlayer mediaPlayer = null;
         try {
+            mediaPlayer = MediaPlayer.create(activity, R.raw.zxl_beep);
             mediaPlayer.setOnErrorListener(this);
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setLooping(false);
             mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
-//            mediaPlayer.prepare();
             return mediaPlayer;
         } catch (Exception e) {
             Log.w(TAG, e);
-            mediaPlayer.release();
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+            }
             return null;
         }
-//        try (AssetFileDescriptor file = activity.getResources().openRawResourceFd(R.raw.zxl_beep)) {
-//            mediaPlayer.setDataSource(file.getFileDescriptor(), file.getStartOffset(), file.getLength());
-//            mediaPlayer.setOnErrorListener(this);
-//            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-//            mediaPlayer.setLooping(false);
-//            mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
-//            mediaPlayer.prepare();
-//            return mediaPlayer;
-//        } catch (IOException ioe) {
-//            Log.w(TAG, ioe);
-//            mediaPlayer.release();
-//            return null;
-//        }
     }
 
     @Override

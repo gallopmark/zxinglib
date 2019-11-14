@@ -55,47 +55,35 @@ import pony.xcode.zxing.DecodeFormatManager;
  */
 public class CodeUtils {
 
-    private CodeUtils(){
+    private CodeUtils() {
         throw new AssertionError();
     }
 
     /**
      * 生成二维码
-     * @param content
-     * @param heightPix
-     * @return
      */
     public static Bitmap createQRCode(String content, int heightPix) {
-        return createQRCode(content,heightPix,null);
+        return createQRCode(content, heightPix, null);
     }
 
     /**
      * 生成二维码
-     * @param content
-     * @param heightPix
-     * @param logo
-     * @return
      */
     public static Bitmap createQRCode(String content, int heightPix, Bitmap logo) {
         //配置参数
         Map<EncodeHintType, Object> hints = new HashMap<>();
-        hints.put( EncodeHintType.CHARACTER_SET, "utf-8");
+        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");
         //容错级别
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         //设置空白边距的宽度
         hints.put(EncodeHintType.MARGIN, 1); //default is 4
-        return createQRCode(content,heightPix,logo,hints);
+        return createQRCode(content, heightPix, logo, hints);
     }
 
     /**
      * 生成二维码
-     * @param content
-     * @param heightPix
-     * @param logo
-     * @param hints
-     * @return
      */
-    public static Bitmap createQRCode(String content, int heightPix, Bitmap logo,Map<EncodeHintType,?> hints) {
+    public static Bitmap createQRCode(String content, int heightPix, Bitmap logo, Map<EncodeHintType, ?> hints) {
         try {
 
             // 图像数据转换，使用了矩阵转换
@@ -175,44 +163,39 @@ public class CodeUtils {
 
     /**
      * 解析二维码图片
-     * @param bitmapPath
-     * @return
      */
     public static String parseQRCode(String bitmapPath) {
         Map<DecodeHintType, Object> hints = new HashMap<>();
         hints.put(DecodeHintType.CHARACTER_SET, "utf-8");
-        return parseQRCode(bitmapPath,hints);
+        return parseQRCode(bitmapPath, hints);
     }
 
     /**
      * 解析二维码图片
-     * @param bitmapPath
-     * @param hints
-     * @return
      */
-    public static String parseQRCode(String bitmapPath, Map<DecodeHintType,?> hints){
+    public static String parseQRCode(String bitmapPath, Map<DecodeHintType, ?> hints) {
         try {
             QRCodeReader reader = new QRCodeReader();
 
             Result result = null;
             RGBLuminanceSource source = getRGBLuminanceSource(compressBitmap(bitmapPath));
-            if (source != null) {
-                BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+            try {
+                result = reader.decode(bitmap, hints);
+            } catch (Exception e) {
+                //解析失败则通过GlobalHistogramBinarizer 再试一次
+                BinaryBitmap bitmap1 = new BinaryBitmap(new GlobalHistogramBinarizer(source));
                 try {
-                    result = reader.decode(bitmap,hints);
-                } catch (Exception e) {
-                    //解析失败则通过GlobalHistogramBinarizer 再试一次
-                    BinaryBitmap bitmap1 = new BinaryBitmap(new GlobalHistogramBinarizer(source));
-                    try {
-                        result = reader.decode(bitmap1);
-                    } catch (NotFoundException ne) {
+                    result = reader.decode(bitmap1);
+                } catch (NotFoundException ignored) {
 
-                    }
-                } finally {
-                    reader.reset();
                 }
+            } finally {
+                reader.reset();
             }
-            return result.getText();
+            if (result != null) {
+                return result.getText();
+            }
         } catch (Exception e) {
             e.printStackTrace();
 
@@ -222,11 +205,9 @@ public class CodeUtils {
 
     /**
      * 解析一维码/二维码图片
-     * @param bitmapPath
-     * @return
      */
-    public static String parseCode(String bitmapPath){
-        Map<DecodeHintType,Object> hints = new HashMap<>();
+    public static String parseCode(String bitmapPath) {
+        Map<DecodeHintType, Object> hints = new HashMap<>();
         //添加可以解析的编码类型
         Vector<BarcodeFormat> decodeFormats = new Vector<>();
         decodeFormats.addAll(DecodeFormatManager.ONE_D_FORMATS);
@@ -235,40 +216,40 @@ public class CodeUtils {
         decodeFormats.addAll(DecodeFormatManager.AZTEC_FORMATS);
         decodeFormats.addAll(DecodeFormatManager.PDF417_FORMATS);
 
-        hints.put(DecodeHintType.TRY_HARDER,Boolean.TRUE);
+        hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
         hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
-        return parseCode(bitmapPath,hints);
+        return parseCode(bitmapPath, hints);
     }
 
     /**
      * 解析一维码/二维码图片
+     *
      * @param bitmapPath
-     * @param hints 解析编码类型
+     * @param hints      解析编码类型
      * @return
      */
-    public static String parseCode(String bitmapPath, Map<DecodeHintType,Object> hints){
+    public static String parseCode(String bitmapPath, Map<DecodeHintType, Object> hints) {
 
         try {
             MultiFormatReader reader = new MultiFormatReader();
             reader.setHints(hints);
             Result result = null;
             RGBLuminanceSource source = getRGBLuminanceSource(compressBitmap(bitmapPath));
-            if (source != null) {
-                BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+            try {
+                result = reader.decodeWithState(bitmap);
+            } catch (Exception e) {//解析失败则通过GlobalHistogramBinarizer 再试一次
+                BinaryBitmap bitmap1 = new BinaryBitmap(new GlobalHistogramBinarizer(source));
                 try {
-                    result = reader.decodeWithState(bitmap);
-                } catch (Exception e) {//解析失败则通过GlobalHistogramBinarizer 再试一次
-                    BinaryBitmap bitmap1 = new BinaryBitmap(new GlobalHistogramBinarizer(source));
-                    try {
-                        result = reader.decodeWithState(bitmap1);
-                    } catch (Exception ne) {
+                    result = reader.decodeWithState(bitmap1);
+                } catch (Exception ignored) {
 
-                    }
-                } finally {
-                    reader.reset();
                 }
+            } finally {
+                reader.reset();
             }
-            return result.getText();
+            if (result != null)
+                return result.getText();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -276,13 +257,10 @@ public class CodeUtils {
     }
 
 
-
     /**
      * 压缩图片
-     * @param path
-     * @return
      */
-    private static Bitmap compressBitmap(String path){
+    private static Bitmap compressBitmap(String path) {
 
         BitmapFactory.Options newOpts = new BitmapFactory.Options();
         // 开始读入图片，此时把options.inJustDecodeBounds 设回true了
@@ -309,10 +287,8 @@ public class CodeUtils {
 
     /**
      * 获取RGBLuminanceSource
-     * @param bitmap
-     * @return
      */
-    private static RGBLuminanceSource getRGBLuminanceSource(@NonNull Bitmap bitmap){
+    private static RGBLuminanceSource getRGBLuminanceSource(@NonNull Bitmap bitmap) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
 
@@ -324,58 +300,31 @@ public class CodeUtils {
 
     /**
      * 生成条形码
-     * @param content
-     * @param format
-     * @param desiredWidth
-     * @param desiredHeight
-     * @return
      */
-    public static Bitmap createBarCode(String content,BarcodeFormat format, int desiredWidth, int desiredHeight) {
-        return createBarCode(content,format,desiredWidth,desiredHeight,null);
+    public static Bitmap createBarCode(String content, BarcodeFormat format, int desiredWidth, int desiredHeight) {
+        return createBarCode(content, format, desiredWidth, desiredHeight, null);
 
     }
 
     /**
      * 生成条形码
-     * @param content
-     * @param format
-     * @param desiredWidth
-     * @param desiredHeight
-     * @param hints
-     * @return
      */
-    public static Bitmap createBarCode(String content, BarcodeFormat format, int desiredWidth, int desiredHeight, Map<EncodeHintType,?> hints) {
-        return createBarCode(content,format,desiredWidth,desiredHeight,hints,false,40,Color.BLACK);
+    public static Bitmap createBarCode(String content, BarcodeFormat format, int desiredWidth, int desiredHeight, Map<EncodeHintType, ?> hints) {
+        return createBarCode(content, format, desiredWidth, desiredHeight, hints, false, 40, Color.BLACK);
     }
 
     /**
      * 生成条形码
-     * @param content
-     * @param format
-     * @param desiredWidth
-     * @param desiredHeight
-     * @param hints
-     * @param isShowText
-     * @return
      */
-    public static Bitmap createBarCode(String content, BarcodeFormat format, int desiredWidth, int desiredHeight, Map<EncodeHintType,?> hints, boolean isShowText) {
-        return createBarCode(content,format,desiredWidth,desiredHeight,hints,isShowText,40,Color.BLACK);
+    public static Bitmap createBarCode(String content, BarcodeFormat format, int desiredWidth, int desiredHeight, Map<EncodeHintType, ?> hints, boolean isShowText) {
+        return createBarCode(content, format, desiredWidth, desiredHeight, hints, isShowText, 40, Color.BLACK);
     }
 
     /**
      * 生成条形码
-     * @param content
-     * @param format
-     * @param desiredWidth
-     * @param desiredHeight
-     * @param hints
-     * @param isShowText
-     * @param textSize
-     * @param textColor
-     * @return
      */
-    public static Bitmap createBarCode(String content,BarcodeFormat format, int desiredWidth, int desiredHeight,Map<EncodeHintType,?> hints,boolean isShowText,int textSize,@ColorInt int textColor) {
-        if(TextUtils.isEmpty(content)){
+    public static Bitmap createBarCode(String content, BarcodeFormat format, int desiredWidth, int desiredHeight, Map<EncodeHintType, ?> hints, boolean isShowText, int textSize, @ColorInt int textColor) {
+        if (TextUtils.isEmpty(content)) {
             return null;
         }
         final int WHITE = 0xFFFFFFFF;
@@ -399,8 +348,8 @@ public class CodeUtils {
             Bitmap bitmap = Bitmap.createBitmap(width, height,
                     Bitmap.Config.ARGB_8888);
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-            if(isShowText){
-                return addCode(bitmap,content,textSize,textColor,textSize/2);
+            if (isShowText) {
+                return addCode(bitmap, content, textSize, textColor, textSize / 2);
             }
             return bitmap;
         } catch (WriterException e) {
@@ -411,13 +360,8 @@ public class CodeUtils {
 
     /**
      * 条形码下面添加文本信息
-     * @param src
-     * @param code
-     * @param textSize
-     * @param textColor
-     * @return
      */
-    private static Bitmap addCode(Bitmap src,String code,int textSize,@ColorInt int textColor,int offset) {
+    private static Bitmap addCode(Bitmap src, String code, int textSize, @ColorInt int textColor, int offset) {
         if (src == null) {
             return null;
         }
@@ -442,7 +386,7 @@ public class CodeUtils {
             paint.setTextSize(textSize);
             paint.setColor(textColor);
             paint.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText(code,srcWidth/2,srcHeight + textSize /2 + offset,paint);
+            canvas.drawText(code, srcWidth / 2, srcHeight + textSize / 2f + offset, paint);
             canvas.save();
             canvas.restore();
         } catch (Exception e) {

@@ -122,7 +122,7 @@ final class InactivityTimer {
 
         private WeakReference<Activity> weakReference;
 
-        public InactivityAsyncTask(Activity activity){
+        InactivityAsyncTask(Activity activity){
             weakReference = new WeakReference<>(activity);
         }
 

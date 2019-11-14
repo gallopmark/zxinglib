@@ -194,12 +194,16 @@ public final class CameraConfigurationUtils {
     }
 
     public static void setVideoStabilization(Camera.Parameters parameters) {
-        if (parameters.isVideoStabilizationSupported()) {
-            if (parameters.getVideoStabilization()) {
-                Log.i(TAG, "Video stabilization already enabled");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            if (parameters.isVideoStabilizationSupported()) {
+                if (parameters.getVideoStabilization()) {
+                    Log.i(TAG, "Video stabilization already enabled");
+                } else {
+                    Log.i(TAG, "Enabling video stabilization...");
+                    parameters.setVideoStabilization(true);
+                }
             } else {
-                Log.i(TAG, "Enabling video stabilization...");
-                parameters.setVideoStabilization(true);
+                Log.i(TAG, "This device does not support video stabilization");
             }
         } else {
             Log.i(TAG, "This device does not support video stabilization");
@@ -271,7 +275,7 @@ public final class CameraConfigurationUtils {
         }
     }
 
-    public static Point findBestPreviewSizeValue(Camera.Parameters parameters,final Point screenResolution) {
+    public static Point findBestPreviewSizeValue(Camera.Parameters parameters, final Point screenResolution) {
 
         List<Camera.Size> rawSupportedSizes = parameters.getSupportedPreviewSizes();
         if (rawSupportedSizes == null) {
@@ -293,9 +297,9 @@ public final class CameraConfigurationUtils {
         }
 
         double screenAspectRatio;
-        if(screenResolution.x < screenResolution.y){
+        if (screenResolution.x < screenResolution.y) {
             screenAspectRatio = screenResolution.x / (double) screenResolution.y;
-        }else{
+        } else {
             screenAspectRatio = screenResolution.y / (double) screenResolution.x;
         }
         Log.i(TAG, "screenAspectRatio: " + screenAspectRatio);
@@ -312,9 +316,9 @@ public final class CameraConfigurationUtils {
             }
 
             boolean isCandidatePortrait = realWidth < realHeight;
-            int maybeFlippedWidth = isCandidatePortrait ? realWidth: realHeight ;
+            int maybeFlippedWidth = isCandidatePortrait ? realWidth : realHeight;
             int maybeFlippedHeight = isCandidatePortrait ? realHeight : realWidth;
-            Log.i(TAG, String.format("maybeFlipped:%d * %d",maybeFlippedWidth,maybeFlippedHeight));
+            Log.i(TAG, String.format("maybeFlipped:%d * %d", maybeFlippedWidth, maybeFlippedHeight));
 
             double aspectRatio = maybeFlippedWidth / (double) maybeFlippedHeight;
             Log.i(TAG, "aspectRatio: " + aspectRatio);

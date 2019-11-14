@@ -28,6 +28,8 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
+
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
@@ -55,7 +57,7 @@ final class DecodeHandler extends Handler {
 
     private long lastZoomTime;
 
-    DecodeHandler(Context context, CameraManager cameraManager,CaptureHandler handler, Map<DecodeHintType,Object> hints) {
+    DecodeHandler(Context context, CameraManager cameraManager, CaptureHandler handler, Map<DecodeHintType, Object> hints) {
         multiFormatReader = new MultiFormatReader();
         multiFormatReader.setHints(hints);
         this.context = context;
@@ -64,21 +66,23 @@ final class DecodeHandler extends Handler {
     }
 
     @Override
-    public void handleMessage(Message message) {
-        if (message == null || !running) {
+    public void handleMessage(@NonNull Message message) {
+        if (!running) {
             return;
         }
         if (message.what == R.id.decode) {
-            decode((byte[]) message.obj, message.arg1, message.arg2,isScreenPortrait(),handler.isSupportVerticalCode());
+            decode((byte[]) message.obj, message.arg1, message.arg2, isScreenPortrait(), handler.isSupportVerticalCode());
 
         } else if (message.what == R.id.quit) {
             running = false;
-            Looper.myLooper().quit();
-
+            Looper looper = Looper.myLooper();
+            if (looper != null) {
+                looper.quit();
+            }
         }
     }
 
-    private boolean isScreenPortrait(){
+    private boolean isScreenPortrait() {
         WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = manager.getDefaultDisplay();
         Point screenResolution = new Point();
@@ -94,10 +98,10 @@ final class DecodeHandler extends Handler {
      * @param width  The width of the preview frame.
      * @param height The height of the preview frame.
      */
-    private void decode(byte[] data, int width, int height,boolean isScreenPortrait,boolean isSupportVerticalCode) {
+    private void decode(byte[] data, int width, int height, boolean isScreenPortrait, boolean isSupportVerticalCode) {
         long start = System.currentTimeMillis();
         Result rawResult = null;
-        PlanarYUVLuminanceSource source = buildPlanarYUVLuminanceSource(data,width,height,isScreenPortrait);
+        PlanarYUVLuminanceSource source = buildPlanarYUVLuminanceSource(data, width, height, isScreenPortrait);
 
         if (source != null) {
             BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
@@ -105,16 +109,16 @@ final class DecodeHandler extends Handler {
                 rawResult = multiFormatReader.decodeWithState(bitmap);
             } catch (Exception e) {
                 BinaryBitmap bitmap1 = new BinaryBitmap(new GlobalHistogramBinarizer(source));
-                try{
+                try {
                     rawResult = multiFormatReader.decodeWithState(bitmap1);
-                }catch (Exception e1){
-                    if(isSupportVerticalCode){
-                        source = buildPlanarYUVLuminanceSource(data,width,height,!isScreenPortrait);
-                        if(source!=null){
+                } catch (Exception e1) {
+                    if (isSupportVerticalCode) {
+                        source = buildPlanarYUVLuminanceSource(data, width, height, !isScreenPortrait);
+                        if (source != null) {
                             BinaryBitmap bitmap2 = new BinaryBitmap(new HybridBinarizer(source));
-                            try{
+                            try {
                                 rawResult = multiFormatReader.decodeWithState(bitmap2);
-                            }catch (Exception e2){
+                            } catch (Exception ignored) {
 
                             }
                         }
@@ -133,24 +137,24 @@ final class DecodeHandler extends Handler {
             Log.d(TAG, "Found barcode in " + (end - start) + " ms");
 
             BarcodeFormat barcodeFormat = rawResult.getBarcodeFormat();
-            if(handler!=null && handler.isSupportAutoZoom() && barcodeFormat == BarcodeFormat.QR_CODE){
+            if (handler != null && handler.isSupportAutoZoom() && barcodeFormat == BarcodeFormat.QR_CODE) {
 
                 ResultPoint[] resultPoints = rawResult.getResultPoints();
-                if(resultPoints.length >= 3){
-                    float distance1 = ResultPoint.distance(resultPoints[0],resultPoints[1]);
-                    float distance2 = ResultPoint.distance(resultPoints[1],resultPoints[2]);
-                    float distance3 = ResultPoint.distance(resultPoints[0],resultPoints[2]);
-                    int maxDistance = (int)Math.max(Math.max(distance1,distance2),distance3);
-                    if(handleAutoZoom(maxDistance,width)){
+                if (resultPoints.length >= 3) {
+                    float distance1 = ResultPoint.distance(resultPoints[0], resultPoints[1]);
+                    float distance2 = ResultPoint.distance(resultPoints[1], resultPoints[2]);
+                    float distance3 = ResultPoint.distance(resultPoints[0], resultPoints[2]);
+                    int maxDistance = (int) Math.max(Math.max(distance1, distance2), distance3);
+                    if (handleAutoZoom(maxDistance, width)) {
                         Message message = Message.obtain();
                         message.what = R.id.decode_succeeded;
                         message.obj = rawResult;
-                        if(handler.isReturnBitmap()){
+                        if (handler.isReturnBitmap()) {
                             Bundle bundle = new Bundle();
                             bundleThumbnail(source, bundle);
                             message.setData(bundle);
                         }
-                        handler.sendMessageDelayed(message,300);
+                        handler.sendMessageDelayed(message, 300);
                         return;
                     }
                 }
@@ -160,7 +164,7 @@ final class DecodeHandler extends Handler {
 
             if (handler != null) {
                 Message message = Message.obtain(handler, R.id.decode_succeeded, rawResult);
-                if(handler.isReturnBitmap()){
+                if (handler.isReturnBitmap()) {
                     Bundle bundle = new Bundle();
                     bundleThumbnail(source, bundle);
                     message.setData(bundle);
@@ -175,9 +179,9 @@ final class DecodeHandler extends Handler {
         }
     }
 
-    private PlanarYUVLuminanceSource buildPlanarYUVLuminanceSource(byte[] data, int width, int height,boolean isRotate){
+    private PlanarYUVLuminanceSource buildPlanarYUVLuminanceSource(byte[] data, int width, int height, boolean isRotate) {
         PlanarYUVLuminanceSource source;
-        if(isRotate){
+        if (isRotate) {
             byte[] rotatedData = new byte[data.length];
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++)
@@ -187,7 +191,7 @@ final class DecodeHandler extends Handler {
             width = height;
             height = tmp;
             source = cameraManager.buildLuminanceSource(rotatedData, width, height);
-        }else{
+        } else {
             source = cameraManager.buildLuminanceSource(data, width, height);
         }
         return source;
@@ -204,20 +208,20 @@ final class DecodeHandler extends Handler {
         bundle.putFloat(DecodeThread.BARCODE_SCALED_FACTOR, (float) width / source.getWidth());
     }
 
-    private boolean handleAutoZoom(int length,int width){
-        if(lastZoomTime > System.currentTimeMillis() - 1000){
+    private boolean handleAutoZoom(int length, int width) {
+        if (lastZoomTime > System.currentTimeMillis() - 1000) {
             return true;
         }
 
-        if(length<width/5){
+        if (length < width / 5) {
 
             Camera camera = cameraManager.getOpenCamera().getCamera();
-            if(camera!=null){
+            if (camera != null) {
                 Camera.Parameters params = camera.getParameters();
                 if (params.isZoomSupported()) {
                     int maxZoom = params.getMaxZoom();
                     int zoom = params.getZoom();
-                    params.setZoom(Math.min(zoom + maxZoom/5,maxZoom));
+                    params.setZoom(Math.min(zoom + maxZoom / 5, maxZoom));
                     camera.setParameters(params);
                     lastZoomTime = System.currentTimeMillis();
                     return true;

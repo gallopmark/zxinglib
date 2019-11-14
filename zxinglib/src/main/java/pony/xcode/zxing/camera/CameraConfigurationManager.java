@@ -36,7 +36,6 @@ import pony.xcode.zxing.camera.open.OpenCamera;
  * A class which deals with reading, parsing, and setting the camera parameters which are used to
  * configure the camera hardware.
  */
-@SuppressWarnings("deprecation") // camera APIs
 final class CameraConfigurationManager {
 
     private static final String TAG = "CameraConfiguration";
