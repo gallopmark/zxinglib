@@ -45,10 +45,11 @@ public class MainActivity extends AppCompatActivity implements OnCaptureCallback
                 }
             }
         });
+        init();
 //        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
 //            init();
 //        } else
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 10086);
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 10086);
     }
 
     @Override
@@ -56,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements OnCaptureCallback
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 //            init();
-            init();
             mHelper.onResume();
         }
     }
