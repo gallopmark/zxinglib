@@ -50,7 +50,7 @@ final class DecodeThread extends Thread {
     private final CameraManager cameraManager;
     private final Map<DecodeHintType,Object> hints;
     private Handler handler;
-    private CaptureHandler captureHandler;
+    private final CaptureHandler captureHandler;
     private final CountDownLatch handlerInitLatch;
 
     DecodeThread(Context context,CameraManager cameraManager,

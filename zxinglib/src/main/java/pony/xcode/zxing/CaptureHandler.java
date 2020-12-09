@@ -138,9 +138,6 @@ public class CaptureHandler extends Handler implements ResultPointCallback {
         return screenResolution.x < screenResolution.y;
     }*/
 
-    /**
-     * @return
-     */
     private ResultPoint transform(ResultPoint originPoint) {
         Point screenPoint = cameraManager.getScreenResolution();
         Point cameraPoint = cameraManager.getCameraResolution();

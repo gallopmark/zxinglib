@@ -24,6 +24,7 @@ import android.os.Vibrator;
 import android.util.Log;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * Manages beeps and vibrations for {@link Activity}.
@@ -32,7 +33,6 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
 
     private static final String TAG = BeepManager.class.getSimpleName();
 
-    private static final float BEEP_VOLUME = 0.10f;
     private static final long VIBRATE_DURATION = 200L;
 
     private final Activity activity;
@@ -58,17 +58,31 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
 //        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 //        shouldBeep(prefs, activity);
 //        vibrate = prefs.getBoolean(Preferences.KEY_VIBRATE, false);
-        if (playBeep && mediaPlayer == null) {
+        if (playBeep) {
             // The volume on STREAM_SYSTEM is not adjustable, and users found it too loud,
             // so we now play on the music stream.
             activity.setVolumeControlStream(AudioManager.STREAM_MUSIC);
-            mediaPlayer = buildMediaPlayer();
+            if (mediaPlayer == null) {
+                try {
+                    mediaPlayer = MediaPlayer.create(activity, R.raw.zxl_beep);
+                    mediaPlayer.setLooping(false);
+                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    mediaPlayer.setOnErrorListener(this);
+                } catch (Exception e) {
+                    Log.w(TAG, e);
+                    if (mediaPlayer != null) {
+                        mediaPlayer.release();
+                    }
+                }
+            }
         }
     }
 
     synchronized void playBeepSoundAndVibrate() {
-        if (playBeep && mediaPlayer != null) {
-            mediaPlayer.start();
+        if (playBeep) {
+            if (mediaPlayer != null) {
+                mediaPlayer.start();
+            }
         }
         if (vibrate) {
             Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
@@ -89,40 +103,18 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
 //        return shouldPlayBeep;
 //    }
 
-    private MediaPlayer buildMediaPlayer() {
-        MediaPlayer mediaPlayer = null;
-        try {
-            mediaPlayer = MediaPlayer.create(activity, R.raw.zxl_beep);
-            mediaPlayer.setOnErrorListener(this);
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.setLooping(false);
-            mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
-            return mediaPlayer;
-        } catch (Exception e) {
-            Log.w(TAG, e);
-            if (mediaPlayer != null) {
-                mediaPlayer.release();
-            }
-            return null;
-        }
-    }
-
     @Override
     public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
-        if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
-            // we are finished, so put up an appropriate error toast if required and finish
-            activity.finish();
-        } else {
-            // possibly media player error, so release and recreate
-            close();
-            updatePrefs();
-        }
+        // possibly media player error, so release and recreate
+        close();
+        updatePrefs();
         return true;
     }
 
     @Override
     public synchronized void close() {
         if (mediaPlayer != null) {
+            mediaPlayer.stop();
             mediaPlayer.release();
             mediaPlayer = null;
         }

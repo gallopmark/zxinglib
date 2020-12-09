@@ -27,6 +27,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import androidx.annotation.FloatRange;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
@@ -50,7 +51,7 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
 
     public static final String TAG = CaptureHelper.class.getSimpleName();
 
-    private Activity activity;
+    private final Activity activity;
 
     private CaptureHandler captureHandler;
     private OnCaptureListener onCaptureListener;
@@ -62,8 +63,8 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
     private AmbientLightManager ambientLightManager;
 
 
-    private ViewfinderView viewfinderView;
-    private SurfaceHolder surfaceHolder;
+    private final ViewfinderView viewfinderView;
+    private final SurfaceHolder surfaceHolder;
     private SurfaceHolder.Callback callback;
 
     private Collection<BarcodeFormat> decodeFormats;
@@ -156,10 +157,7 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
         cameraManager.setFramingRectHorizontalOffset(framingRectHorizontalOffset);
         callback = new SurfaceHolder.Callback() {
             @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                if (holder == null) {
-                    Log.e(TAG, "*** WARNING *** surfaceCreated() gave us a null surface!");
-                }
+            public void surfaceCreated(@NonNull SurfaceHolder holder) {
                 if (!hasSurface) {
                     hasSurface = true;
                     initCamera(holder);
@@ -167,12 +165,12 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
             }
 
             @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
 
             }
 
             @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
+            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
                 hasSurface = false;
             }
         };
@@ -381,10 +379,7 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
         if (x > max) {
             return max;
         }
-        if (x < min) {
-            return min;
-        }
-        return x;
+        return Math.max(x, min);
     }
 
 

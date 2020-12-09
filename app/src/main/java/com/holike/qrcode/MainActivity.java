@@ -45,11 +45,10 @@ public class MainActivity extends AppCompatActivity implements OnCaptureCallback
                 }
             }
         });
-        init();
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-//            init();
-//        } else
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 10086);
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            init();
+        } else
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 10086);
     }
 
     @Override

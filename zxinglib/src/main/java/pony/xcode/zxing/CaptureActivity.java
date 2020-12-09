@@ -120,8 +120,7 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        mCaptureHelper.onTouchEvent(event);
-        return super.onTouchEvent(event);
+        return mCaptureHelper.onTouchEvent(event);
     }
 
     /**
