@@ -24,7 +24,6 @@ import android.os.Vibrator;
 import android.util.Log;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * Manages beeps and vibrations for {@link Activity}.
@@ -62,17 +61,20 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
             // The volume on STREAM_SYSTEM is not adjustable, and users found it too loud,
             // so we now play on the music stream.
             activity.setVolumeControlStream(AudioManager.STREAM_MUSIC);
-            if (mediaPlayer == null) {
-                try {
-                    mediaPlayer = MediaPlayer.create(activity, R.raw.zxl_beep);
-                    mediaPlayer.setLooping(false);
-                    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    mediaPlayer.setOnErrorListener(this);
-                } catch (Exception e) {
-                    Log.w(TAG, e);
-                    if (mediaPlayer != null) {
-                        mediaPlayer.release();
-                    }
+            ensureMediaPlayer();
+        }
+    }
+
+    synchronized void ensureMediaPlayer() {
+        if (mediaPlayer == null) {
+            try {
+                mediaPlayer = MediaPlayer.create(activity, R.raw.zxl_beep);
+                mediaPlayer.setLooping(false);
+                mediaPlayer.setOnErrorListener(this);
+            } catch (Exception e) {
+                Log.w(TAG, e);
+                if (mediaPlayer != null) {
+                    mediaPlayer.release();
                 }
             }
         }
@@ -80,6 +82,7 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
 
     synchronized void playBeepSoundAndVibrate() {
         if (playBeep) {
+            ensureMediaPlayer();
             if (mediaPlayer != null) {
                 mediaPlayer.start();
             }
@@ -107,7 +110,7 @@ public final class BeepManager implements MediaPlayer.OnErrorListener, Closeable
     public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
         // possibly media player error, so release and recreate
         close();
-        updatePrefs();
+        ensureMediaPlayer();
         return true;
     }
 

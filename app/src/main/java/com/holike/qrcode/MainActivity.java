@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.SurfaceView;
 import android.view.View;
@@ -22,8 +23,8 @@ public class MainActivity extends AppCompatActivity implements OnCaptureCallback
     private SurfaceView surfaceView;
     private ViewfinderView viewfinderView;
     private CaptureHelper mHelper;
-    private Button button;
     private boolean isOpenFlash;
+    private final Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements OnCaptureCallback
         setContentView(R.layout.activity_main);
         surfaceView = findViewById(R.id.surfaceView);
         viewfinderView = findViewById(R.id.viewfinderView);
-        button = findViewById(R.id.bt_switch_flash);
+        Button button = findViewById(R.id.bt_switch_flash);
         viewfinderView.setFrameRatio(0.5f);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,10 +74,26 @@ public class MainActivity extends AppCompatActivity implements OnCaptureCallback
 
     @Override
     public boolean onResultCallback(String result) {
-        if (!TextUtils.isEmpty(result))
+        if (!TextUtils.isEmpty(result)) {
             Toast.makeText(this, result, Toast.LENGTH_SHORT).show();
+            //扫描结果不为空
+            if (mHelper != null) {
+                mHelper.onPause();
+            }
+            handler.removeCallbacks(mResumeAction);
+            handler.postDelayed(mResumeAction, 3000);
+        }
         return false;
     }
+
+    private final Runnable mResumeAction = new Runnable() {
+        @Override
+        public void run() {
+            if (mHelper != null) {
+                mHelper.onResume();
+            }
+        }
+    };
 
     @Override
     protected void onResume() {

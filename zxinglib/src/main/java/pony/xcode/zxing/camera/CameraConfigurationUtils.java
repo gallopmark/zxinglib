@@ -25,7 +25,6 @@ import android.util.Log;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -35,7 +34,6 @@ import java.util.regex.Pattern;
  *
  * @author Sean Owen
  */
-@SuppressWarnings("deprecation") // camera APIs
 public final class CameraConfigurationUtils {
 
     private static final String TAG = "CameraConfiguration";
@@ -169,7 +167,7 @@ public final class CameraConfigurationUtils {
     public static void setFocusArea(Camera.Parameters parameters) {
         if (parameters.getMaxNumFocusAreas() > 0) {
             Log.i(TAG, "Old focus areas: " + toString(parameters.getFocusAreas()));
-            List<Camera.Area> middleArea = buildMiddleArea(AREA_PER_1000);
+            List<Camera.Area> middleArea = buildMiddleArea();
             Log.i(TAG, "Setting focus area to : " + toString(middleArea));
             parameters.setFocusAreas(middleArea);
         } else {
@@ -180,7 +178,7 @@ public final class CameraConfigurationUtils {
     public static void setMetering(Camera.Parameters parameters) {
         if (parameters.getMaxNumMeteringAreas() > 0) {
             Log.i(TAG, "Old metering areas: " + parameters.getMeteringAreas());
-            List<Camera.Area> middleArea = buildMiddleArea(AREA_PER_1000);
+            List<Camera.Area> middleArea = buildMiddleArea();
             Log.i(TAG, "Setting metering area to : " + toString(middleArea));
             parameters.setMeteringAreas(middleArea);
         } else {
@@ -188,9 +186,9 @@ public final class CameraConfigurationUtils {
         }
     }
 
-    private static List<Camera.Area> buildMiddleArea(int areaPer1000) {
+    private static List<Camera.Area> buildMiddleArea() {
         return Collections.singletonList(
-                new Camera.Area(new Rect(-areaPer1000, -areaPer1000, areaPer1000, areaPer1000), 1));
+                new Camera.Area(new Rect(-CameraConfigurationUtils.AREA_PER_1000, -CameraConfigurationUtils.AREA_PER_1000, CameraConfigurationUtils.AREA_PER_1000, CameraConfigurationUtils.AREA_PER_1000), 1));
     }
 
     public static void setVideoStabilization(Camera.Parameters parameters) {

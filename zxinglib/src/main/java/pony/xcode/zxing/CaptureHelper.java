@@ -212,7 +212,6 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
         }
         inactivityTimer.onPause();
         ambientLightManager.stop();
-        beepManager.close();
         cameraManager.closeDriver();
         if (!hasSurface) {
             surfaceHolder.removeCallback(callback);
@@ -222,6 +221,7 @@ public class CaptureHelper implements CaptureLifecycle, CaptureTouchEvent, Captu
 
     @Override
     public void onDestroy() {
+        beepManager.close();
         inactivityTimer.shutdown();
     }
 
